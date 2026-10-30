@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Magnetician</title>
+<style>
+:root{
+  --gold:#e8b64c; --gold2:#f7dc8a; --bg:#0b0e14; --panel:#141926;
+  --ink:#eef1f6; --dim:#9aa3b5; --red:#e5484d; --blue:#3e8ef0;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden; overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;}
+#top{display:flex;align-items:center;gap:8px;padding:8px 10px;min-height:56px;
+  background:var(--panel);border-bottom:1px solid #232b3d;z-index:5;}
+#top .tbtn{min-width:48px;min-height:48px;border:1px solid #2c364e;border-radius:12px;
+  background:#1b2233;color:var(--ink);font-size:18px;cursor:pointer;}
+#top .tbtn.on{border-color:var(--gold);color:var(--gold);}
+#lvlName{flex:1;text-align:center;font-weight:700;letter-spacing:.5px;font-size:15px;}
+#lvlName small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:0;}
+#stage{position:relative;flex:1;min-height:0;background:radial-gradient(120% 90% at 50% 0%,#101623 0%,#0b0e14 70%);}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+#traybar{display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:72px;
+  background:var(--panel);border-top:1px solid #232b3d;}
+#trayLabel{font-size:11px;color:var(--dim);letter-spacing:1px;}
+#tray{display:flex;gap:8px;flex:1;}
+.tpiece{width:56px;height:48px;border-radius:10px;border:2px dashed #3a4560;
+  background:#1b2233;position:relative;cursor:pointer;}
+.tpiece.full{border-style:solid;border-color:#4a5878;}
+.tpiece .bar{position:absolute;left:8px;right:8px;top:16px;height:16px;border-radius:8px;
+  background:linear-gradient(180deg,#aeb7c6 0%,#6b7280 60%,#4a5160 100%);}
+.tpiece .bar::before{content:"";position:absolute;left:0;top:0;bottom:0;width:40%;
+  background:var(--red);border-radius:8px 0 0 8px;}
+.tpiece .bar::after{content:"";position:absolute;right:0;top:0;bottom:0;width:40%;
+  background:var(--blue);border-radius:0 8px 8px 0;}
+#parInfo{font-size:12px;color:var(--dim);text-align:right;line-height:1.5;white-space:nowrap;}
+#parInfo b{color:var(--gold);}
+#controls{display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--panel);border-top:1px solid #232b3d;}
+.cbtn{flex:1;min-height:56px;border-radius:14px;border:1px solid #2c364e;font-size:16px;
+  font-weight:800;letter-spacing:1px;cursor:pointer;color:var(--ink);background:#1b2233;}
+#cRelease{background:linear-gradient(180deg,#f2cd6e,#c9962e);color:#241a05;border:none;
+  box-shadow:0 4px 18px rgba(232,182,76,.35);}
+#cRelease:disabled{opacity:.45;box-shadow:none;}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,7,12,.82);backdrop-filter:blur(3px);z-index:20;padding:20px;}
+.overlay.hidden{display:none;}
+.card{background:var(--panel);border:1px solid #2c364e;border-radius:20px;padding:26px 22px;
+  max-width:420px;width:100%;text-align:center;box-shadow:0 12px 50px rgba(0,0,0,.5);}
+.card h1{margin:0 0 4px;font-size:34px;letter-spacing:3px;color:var(--gold);}
+.card h2{margin:0 0 10px;font-size:22px;color:var(--gold);}
+.card p{color:var(--dim);font-size:14px;line-height:1.6;margin:8px 0;}
+.card .flav{color:var(--ink);font-style:italic;}
+.bigbtn{display:block;width:100%;min-height:56px;margin-top:12px;border-radius:14px;border:none;
+  font-size:17px;font-weight:800;letter-spacing:1px;cursor:pointer;
+  background:linear-gradient(180deg,#f2cd6e,#c9962e);color:#241a05;}
+.ghostbtn{display:block;width:100%;min-height:52px;margin-top:10px;border-radius:14px;
+  border:1px solid #2c364e;font-size:15px;font-weight:700;cursor:pointer;
+  background:#1b2233;color:var(--ink);}
+#lvlGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+.lvl{min-height:76px;border-radius:14px;border:1px solid #2c364e;background:#1b2233;
+  color:var(--ink);cursor:pointer;font-size:13px;font-weight:700;padding:8px 4px;}
+.lvl .n{display:block;font-size:20px;color:var(--gold);}
+.lvl.done{border-color:#3f7a4e;}
+.lvl.done .n{color:#7ddf9a;}
+.lvl.locked{opacity:.35;cursor:default;}
+.lvl .st{color:var(--gold);font-size:11px;}
+.stat{font-size:15px;margin:6px 0;color:var(--ink);}
+.stat b{color:var(--gold);}
+.hint{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5;}
+kbd{border:1px solid #3a4560;border-radius:6px;padding:1px 6px;font-size:11px;background:#1b2233;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <button class="tbtn" id="bMenu" aria-label="Levels">&#9776;</button>
+    <div id="lvlName">MAGNETICIAN<small>pick a level</small></div>
+    <button class="tbtn on" id="bFields" aria-label="Toggle field lines" title="Field lines">&#8756;</button>
+    <button class="tbtn on" id="bSound" aria-label="Toggle sound" title="Sound">&#9836;</button>
+    <button class="tbtn" id="bPause" aria-label="Pause" title="Pause">| |</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div class="overlay" id="ovTitle"><div class="card">
+      <h1>MAGNETICIAN</h1>
+      <p class="flav">Magnets: the original wireless.</p>
+      <p>You are the magician of magnets. Place bar magnets, flip their poles,
+      then release the steel orb and watch physics do the show. Land it in the cradle.</p>
+      <p><span style="color:var(--red)">&#9679; Red pushes.</span>
+      &nbsp;<span style="color:var(--blue)">&#9679; Blue pulls.</span></p>
+      <button class="bigbtn" id="bStart">BEGIN</button>
+      <button class="ghostbtn" id="bHow">HOW TO PLAY</button>
+    </div></div>
+    <div class="overlay hidden" id="ovHow"><div class="card">
+      <h2>HOW TO PLAY</h2>
+      <p>Tap a magnet in the tray to drop it on the board. <b>Drag</b> it to move it.
+      <b>Tap</b> a placed magnet to flip its poles. <b>Double-tap</b> to send it back.</p>
+      <p>Press <b>RELEASE</b> to let the orb fly. <b>RESET</b> stops the run and keeps
+      your layout. Match or beat <b>par</b> for a star.</p>
+      <p>Coils fire the orb. Gray blocks wake up near magnets and join in.
+      Pulsing magnets keep their own rhythm. Blue shimmer slows everything down.</p>
+      <button class="bigbtn" id="bHowBack">GOT IT</button>
+    </div></div>
+    <div class="overlay hidden" id="ovLevels"><div class="card">
+      <h2>LEVELS</h2>
+      <div id="lvlGrid"></div>
+      <button class="ghostbtn" id="bLvlBack">BACK</button>
+    </div></div>
+    <div class="overlay hidden" id="ovPause"><div class="card">
+      <h2>PAUSED</h2>
+      <p class="flav">The fields hold their breath.</p>
+      <button class="bigbtn" id="bResume">RESUME</button>
+      <button class="ghostbtn" id="bRestart">RESTART LEVEL</button>
+      <button class="ghostbtn" id="bQuit">LEVEL SELECT</button>
+    </div></div>
+    <div class="overlay hidden" id="ovWin"><div class="card">
+      <h2 id="winTitle">BEAUTIFUL.</h2>
+      <p class="flav" id="winFlav">Do it with fewer magnets.</p>
+      <div class="stat" id="winStats"></div>
+      <button class="bigbtn" id="bNext">NEXT LEVEL</button>
+      <button class="ghostbtn" id="bReplay">REPLAY</button>
+      <button class="ghostbtn" id="bWinLevels">LEVEL SELECT</button>
+    </div></div>
+    <div class="overlay hidden" id="ovFail"><div class="card">
+      <h2>THE ORB IS LOOSE.</h2>
+      <p class="flav">Physics is undefeated. Adjust and try again.</p>
+      <button class="bigbtn" id="bRetry">TRY AGAIN</button>
+      <button class="ghostbtn" id="bFailLevels">LEVEL SELECT</button>
+    </div></div>
+  </div>
+  <div id="traybar">
+    <div id="trayLabel">TRAY</div>
+    <div id="tray"></div>
+    <div id="parInfo">PAR <b>-</b><br>USED <b>0</b></div>
+  </div>
+  <div id="controls">
+    <button class="cbtn" id="cClear">CLEAR</button>
+    <button class="cbtn" id="cReset">RESET</button>
+    <button class="cbtn" id="cRelease">RELEASE</button>
+  </div>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   MAGNETICIAN - core physics + level data. No DOM here.
+   The orb is modeled as a small north monopole (charge +1):
+   red poles (+) push it, blue poles (-) pull it. "Red pushes,
+   blue pulls." Live steel gets an induced attractive charge.
+   ============================================================ */
+const MAG = (function(){
+const TAU = Math.PI*2;
+// ---- tuning constants ----
+const K = 90000;          // pole force constant (F = K*q*c/d^2)
+const DMIN = 7;           // distance clamp to avoid singularity
+const POLE_FCAP = 340;    // per-pole force cap
+const TOTAL_FCAP = 900;   // total force cap
+const DRAG = 0.10;        // mild air drag (per second factor)
+const REST = 0.35;        // wall restitution
+const MAG_R = 55;         // live-steel magnetization radius
+const SUB = 1/120;        // fixed physics substep
+const WIN_SPEED = 7, WIN_HOLD = 0.45;
+
+function blankSteel(st){ return st.map(function(s){ return {x:s.x,y:s.y,r:s.r,mag:0,str:0,sx:0,sy:0}; }); }
+function blankCoils(cs){ return cs.map(function(c){ return {armed:true,flash:0}; }); }
+
+function makeWorld(level){
+  const w0 = {
+    level: level,
+    t: 0,
+    orb: { x: level.launcher.x, y: level.launcher.y, vx:0, vy:0, r:3.2 },
+    placed: [],            // {x,y,flip}
+    steel: blankSteel(level.steel||[]),
+    coils: blankCoils(level.coils||[]),
+    result: null,          // null | 'win' | 'fail'
+    stillT: 0,
+    walls: buildWalls(level)
+  };
+  (level.preplaced||[]).forEach(function(m){ w0.placed.push({x:m.x,y:m.y,flip:!!m.flip}); });
+  return w0;
+}
+
+function buildWalls(level){
+  const T=6, W=100, H=150;
+  const walls=[];
+  const gaps={}; (level.gaps||[]).forEach(function(g){ (gaps[g.side]=gaps[g.side]||[]).push(g); });
+  function hseg(x0,x1,y){ if(x1-x0>0.5) walls.push({x:x0,y:y,w:x1-x0,h:T}); }
+  function vseg(y0,y1,x){ if(y1-y0>0.5) walls.push({x:x,y:y0,w:T,h:y1-y0}); }
+  // top / bottom (full width span)
+  let gs=(gaps.top||[]).slice().sort((a,b)=>a.at-b.at), cur=-T;
+  gs.forEach(function(g){ hseg(cur, g.at-g.len/2, -T); cur=g.at+g.len/2; }); hseg(cur, W+T, -T);
+  gs=(gaps.bottom||[]).slice().sort((a,b)=>a.at-b.at); cur=-T;
+  gs.forEach(function(g){ hseg(cur, g.at-g.len/2, H); cur=g.at+g.len/2; }); hseg(cur, W+T, H);
+  // left / right
+  gs=(gaps.left||[]).slice().sort((a,b)=>a.at-b.at); cur=0;
+  gs.forEach(function(g){ vseg(cur, g.at-g.len/2, -T); cur=g.at+g.len/2; }); vseg(cur, H, -T);
+  gs=(gaps.right||[]).slice().sort((a,b)=>a.at-b.at); cur=0;
+  gs.forEach(function(g){ vseg(cur, g.at-g.len/2, W); cur=g.at+g.len/2; }); vseg(cur, H, W);
+  (level.walls||[]).forEach(function(r){ walls.push({x:r.x,y:r.y,w:r.w,h:r.h}); });
+  return walls;
+}
+
+// pulse magnet mode at sim time t: +1 normal, -1 reversed, 0 off
+function pulseMode(p, t){
+  let cyc=0, i;
+  for(i=0;i<p.phases.length;i++) cyc+=p.phases[i].dur;
+  let tt = ((t % cyc)+cyc)%cyc;
+  for(i=0;i<p.phases.length;i++){ if(tt < p.phases[i].dur) return p.phases[i].mode; tt -= p.phases[i].dur; }
+  return p.phases[0].mode;
+}
+function pulsePhaseLeft(p, t){
+  let cyc=0, i;
+  for(i=0;i<p.phases.length;i++) cyc+=p.phases[i].dur;
+  let tt = ((t % cyc)+cyc)%cyc;
+  for(i=0;i<p.phases.length;i++){ if(tt < p.phases[i].dur) return p.phases[i].dur - tt; tt -= p.phases[i].dur; }
+  return 0;
+}
+
+// collect all active poles: {x,y,c,str}
+function collectPoles(w){
+  const poles=[];
+  w.placed.forEach(function(m){
+    const s = m.flip ? -1 : 1;
+    poles.push({x:m.x+9, y:m.y, c: s*1,  str:1});
+    poles.push({x:m.x-9, y:m.y, c: s*-1, str:1});
+  });
+  (w.level.pulses||[]).forEach(function(p){
+    const mode = pulseMode(p, w.t);
+    if(mode===0) return;
+    poles.push({x:p.x+9, y:p.y, c: mode*1,  str:1});
+    poles.push({x:p.x-9, y:p.y, c: mode*-1, str:1});
+  });
+  return poles;
+}
+
+// magnetize live steel (3 propagation passes so chains work)
+function magnetize(w, poles){
+  const st=w.steel;
+  st.forEach(function(b){ b.mag=0; b.str=0; });
+  let sources = poles.map(function(p){ return {x:p.x,y:p.y,c:p.c,str:p.str}; });
+  for(let pass=0; pass<6; pass++){
+    let changed=false;
+    st.forEach(function(b){
+      if(b.mag && pass>0) return;
+      let best=0, bx=0, by=0;
+      sources.forEach(function(s){
+        const dx=b.x-s.x, dy=b.y-s.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d < MAG_R){
+          if(Math.abs(s.str)<0.01) return;
+          const v = 0.6*(1-d/MAG_R);
+          if(v>best){ best=v; bx=s.x; by=s.y; }
+        }
+      });
+      if(best>0.02){ b.mag=1; b.str=Math.min(0.9,Math.max(b.str,best)); b.sx=bx; b.sy=by; changed=true; }
+    });
+    // magnetized blocks become sources for the next pass
+    sources = sources.concat(st.filter(function(b){return b.mag;}).map(function(b){
+      return {x:b.x,y:b.y,c:-1,str:b.str};
+    }));
+    if(!changed) break;
+  }
+}
+
+function poleForce(ox,oy,px,py,c,str){
+  let dx=ox-px, dy=oy-py;
+  let d=Math.sqrt(dx*dx+dy*dy);
+  if(d<DMIN){ dx*=DMIN/Math.max(d,0.001); dy*=DMIN/Math.max(d,0.001); d=DMIN; }
+  let f = K*1*c*str/(d*d);
+  if(f>POLE_FCAP) f=POLE_FCAP; else if(f<-POLE_FCAP) f=-POLE_FCAP;
+  return [f*dx/d, f*dy/d];
+}
+
+function collideWalls(w){
+  const o=w.orb;
+  w.walls.forEach(function(r){
+    const cx=Math.max(r.x,Math.min(o.x,r.x+r.w));
+    const cy=Math.max(r.y,Math.min(o.y,r.y+r.h));
+    let dx=o.x-cx, dy=o.y-cy;
+    let d=Math.sqrt(dx*dx+dy*dy);
+    if(d < o.r){
+      let nx,ny;
+      if(d>0.001){ nx=dx/d; ny=dy/d; }
+      else { // center inside rect: push out along smallest penetration
+        const pl=o.x-r.x, pr=r.x+r.w-o.x, pt=o.y-r.y, pb=r.y+r.h-o.y;
+        const m=Math.min(pl,pr,pt,pb);
+        if(m===pl){nx=-1;ny=0;} else if(m===pr){nx=1;ny=0;}
+        else if(m===pt){nx=0;ny=-1;} else {nx=0;ny=1;}
+        d=0;
+      }
+      const push=o.r-d;
+      o.x+=nx*push; o.y+=ny*push;
+      const vn=o.vx*nx+o.vy*ny;
+      if(vn<0){
+        o.vx-=(1+REST)*vn*nx; o.vy-=(1+REST)*vn*ny;
+        o.vx*=0.985; o.vy*=0.985;
+      }
+    }
+  });
+}
+
+function substep(w, dt){
+  if(w.result) return;
+  w.t+=dt;
+  const o=w.orb, L=w.level;
+  const poles=collectPoles(w);
+  magnetize(w, poles);
+  let fx=0, fy=0, i;
+  for(i=0;i<poles.length;i++){
+    const p=poles[i], f=poleForce(o.x,o.y,p.x,p.y,p.c,p.str);
+    fx+=f[0]; fy+=f[1];
+  }
+  // live steel attractors (induced: always attract the orb)
+  const st=w.steel;
+  for(i=0;i<st.length;i++){
+    const b=st[i]; if(!b.mag) continue;
+    let dx=o.x-b.x, dy=o.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+    if(d<DMIN){ d=DMIN; }
+    let f=K*b.str/(d*d);
+    if(f>POLE_FCAP) f=POLE_FCAP;
+    fx-=f*dx/d; fy-=f*dy/d;
+  }
+  const fm=Math.sqrt(fx*fx+fy*fy);
+  if(fm>TOTAL_FCAP){ fx*=TOTAL_FCAP/fm; fy*=TOTAL_FCAP/fm; }
+  o.vx+=fx*dt; o.vy+=fy*dt;
+  // brake fields (eddy damping)
+  (L.brakes||[]).forEach(function(z){
+    const dx=o.x-z.x, dy=o.y-z.y;
+    if(dx*dx+dy*dy < z.r*z.r){ const k=Math.max(0,1-7*dt); o.vx*=k; o.vy*=k; }
+  });
+  // cradle catch damping
+  const c=L.cradle, cdx=o.x-c.x, cdy=o.y-c.y, cd=Math.sqrt(cdx*cdx+cdy*cdy);
+  if(cd < c.r*1.7){ const k=Math.max(0,1-2.5*dt); o.vx*=k; o.vy*=k; }
+  // air drag
+  const dr=Math.max(0,1-DRAG*dt); o.vx*=dr; o.vy*=dr;
+  o.x+=o.vx*dt; o.y+=o.vy*dt;
+  collideWalls(w);
+  // coils
+  (L.coils||[]).forEach(function(cl,idx){
+    const cs=w.coils[idx];
+    const dx=o.x-cl.x, dy=o.y-cl.y, d=Math.sqrt(dx*dx+dy*dy);
+    if(cs.armed && d < cl.r){
+      o.vx+=cl.ax*cl.power; o.vy+=cl.ay*cl.power;
+      cs.armed=false; cs.flash=1;
+    } else if(!cs.armed && d > cl.r*1.6){
+      cs.armed=true;
+    }
+    if(cs.flash>0) cs.flash=Math.max(0,cs.flash-dt*3);
+  });
+  // win check
+  const sp=Math.sqrt(o.vx*o.vx+o.vy*o.vy);
+  if(cd < c.r && sp < WIN_SPEED){ w.stillT+=dt; } else { w.stillT=0; }
+  if(w.stillT > WIN_HOLD){ w.result='win'; return; }
+  // void
+  if(o.x<-6||o.x>106||o.y<-6||o.y>156){ w.result='fail'; }
+}
+
+function stepWorld(w, frameDt){
+  let rem=Math.min(frameDt,0.06);
+  while(rem>1e-9 && !w.result){
+    const dt=Math.min(SUB,rem);
+    substep(w,dt);
+    rem-=dt;
+  }
+}
+
+// run a full sim headlessly (for tests): placements + max seconds
+function simulate(level, placements, maxSec){
+  const w=makeWorld(level);
+  (placements||[]).forEach(function(p){ w.placed.push({x:p.x,y:p.y,flip:!!p.flip}); });
+  const steps=Math.floor(maxSec/SUB);
+  for(let i=0;i<steps && !w.result;i++) substep(w,SUB);
+  return w;
+}
+
+return {
+  TAU:TAU, K:K, SUB:SUB, WIN_SPEED:WIN_SPEED,
+  makeWorld:makeWorld, stepWorld:stepWorld, substep:substep, simulate:simulate,
+  pulseMode:pulseMode, pulsePhaseLeft:pulsePhaseLeft, collectPoles:collectPoles,
+  buildWalls:buildWalls
+};
+})();
+</script>
+<script>
+"use strict";
+/* ============================================================
+   MAGNETICIAN - 12 hand-designed levels.
+   Each level documents its solution (verified by sim replay in
+   the /tmp test harness). Conventions: board is 100 x 150.
+   "Red pushes, blue pulls" (orb is a + charge).
+   ============================================================ */
+MAG.LEVELS = [
+{
+  name:"First Spark", sub:"Blue pulls. Red pushes.", tray:2, par:1,
+  launcher:{x:20,y:128}, cradle:{x:80,y:24,r:9},
+  brakes:[{x:80,y:24,r:15}],
+  solution:[{x:86,y:24,flip:false}],
+  solutionNote:"S pole parked just past the cradle pulls the orb on a straight line through the brake into the cradle."
+},
+{
+  name:"The Long Way", sub:"Walls are just suggestions.", tray:2, par:1,
+  launcher:{x:20,y:120}, cradle:{x:80,y:90,r:9},
+  walls:[{x:46,y:0,w:12,h:100}],
+  brakes:[{x:80,y:90,r:15}],
+  solution:[{x:88,y:97,flip:false}],
+  solutionNote:"S pole beyond the cradle; the straight pull line passes under the wall end and through the brake."
+},
+{
+  name:"Flip It", sub:"Something is backwards.", tray:1, par:0,
+  launcher:{x:20,y:100}, cradle:{x:80,y:100,r:9},
+  brakes:[{x:80,y:100,r:15}],
+  preplaced:[{x:95,y:100,flip:true}],
+  solution:[{x:95,y:100,flip:false}],
+  solutionNote:"The magnet starts backwards, pushing the orb away. One tap flips it: the S pole then pulls the orb on-axis into the brake and cradle."
+},
+{
+  name:"The Coil", sub:"Feed the ring.", tray:2, par:1,
+  launcher:{x:12,y:100}, cradle:{x:78,y:100,r:9},
+  coils:[{x:44,y:100,r:9,ax:1,ay:0,power:60}],
+  brakes:[{x:78,y:100,r:15}],
+  solution:[{x:91,y:100,flip:false}],
+  solutionNote:"S pole past the cradle pulls the orb on-axis straight through the coil mouth; the coil fires it onward into the brake."
+},
+{
+  name:"Live Wire", sub:"Wake the gray blocks.", tray:2, par:1,
+  launcher:{x:16,y:100}, cradle:{x:88,y:100,r:9},
+  steel:[{x:34,y:100,r:7},{x:56,y:100,r:7},{x:78,y:100,r:6},{x:92,y:100,r:6}],
+  brakes:[{x:88,y:100,r:16}],
+  solution:[{x:34,y:55,flip:false}],
+  solutionNote:"Magnet wakes the first block from above (gentle on the orb); the magnetized relay hands the orb block to block, and the last block sits inside the cradle zone to hold it."
+},
+{
+  name:"Perfect Timing", sub:"The magnet has a rhythm.", tray:2, par:1,
+  launcher:{x:20,y:128}, cradle:{x:80,y:30,r:9},
+  pulses:[{x:52,y:84,phases:[{dur:2.0,mode:1},{dur:1.5,mode:0},{dur:2.0,mode:-1},{dur:1.5,mode:0}]}],
+  brakes:[{x:80,y:30,r:15}],
+  solution:[{x:34,y:114,flip:false}],
+  solutionNote:"One magnet lofts the orb into the pulse lane; the pulse rhythm grabs it and throws it to the brake. Verified by sim replay."
+},
+{
+  name:"Catch It", sub:"Come in hot.", tray:2, par:1,
+  launcher:{x:14,y:128}, cradle:{x:88,y:128,r:9},
+  brakes:[{x:88,y:128,r:18}],
+  solution:[{x:2,y:128,flip:false}],
+  solutionNote:"Close N pole shoves the orb flat across the board; the big brake eats the speed and pins it into the cradle."
+},
+{
+  name:"Bank Shot", sub:"Thread the needle.", tray:3, par:1,
+  launcher:{x:16,y:120}, cradle:{x:84,y:50,r:9},
+  walls:[{x:40,y:0,w:12,h:80}],
+  coils:[{x:60,y:78,r:9,ax:0.61,ay:-0.8,power:60}],
+  brakes:[{x:84,y:50,r:15}],
+  solution:[{x:14,y:50,flip:true}],
+  solutionNote:"A gentle drift magnet up-left walks the orb into the coil mouth; the coil fires it on-axis into the brake. Verified by sim replay."
+},
+{
+  name:"Chain Maze", sub:"Wake the relay.", tray:2, par:1,
+  launcher:{x:12,y:100}, cradle:{x:85,y:44,r:9},
+  steel:[{x:28,y:100,r:7},{x:48,y:92,r:7},{x:66,y:80,r:7},{x:80,y:64,r:7},{x:88,y:46,r:6}],
+  brakes:[{x:85,y:44,r:15}],
+  solution:[{x:68,y:38,flip:true}],
+  solutionNote:"One magnet wakes the whole relay; the magnetized chain hands the orb along and traps it at the cradle. Verified by sim replay."
+},
+{
+  name:"Syncopation", sub:"Ride the rhythm.", tray:3, par:1,
+  launcher:{x:16,y:130}, cradle:{x:86,y:40,r:9},
+  pulses:[{x:50,y:90,phases:[{dur:2.0,mode:1},{dur:1.2,mode:0},{dur:2.0,mode:-1},{dur:1.2,mode:0}]}],
+  brakes:[{x:86,y:40,r:16}],
+  solution:[{x:14,y:56,flip:false}],
+  solutionNote:"A low magnet lofts the orb into the pulse lane; the pulse cycle grabs and throws it to the brake. Verified by sim replay."
+},
+{
+  name:"The Works", sub:"Relay into the coil.", tray:2, par:1,
+  launcher:{x:14,y:120}, cradle:{x:90,y:30,r:9},
+  steel:[{x:30,y:104,r:7},{x:48,y:92,r:7},{x:64,y:82,r:7}],
+  coils:[{x:80,y:74,r:9,ax:0.6,ay:-0.8,power:60}],
+  brakes:[{x:90,y:30,r:15}],
+  solution:[{x:8,y:56,flip:false}],
+  solutionNote:"One magnet wakes the relay from afar; the blocks hand the orb up-right into the coil mouth, and the coil fires it into the brake. Verified by sim replay."
+},
+{
+  name:"Gauntlet", sub:"The full mad scientist.", tray:3, par:1,
+  launcher:{x:14,y:132}, cradle:{x:90,y:28,r:9},
+  walls:[{x:36,y:70,w:12,h:80}],
+  steel:[{x:22,y:108,r:7},{x:22,y:84,r:7},{x:44,y:58,r:7}],
+  coils:[{x:66,y:52,r:9,ax:0.75,ay:-0.66,power:62}],
+  brakes:[{x:90,y:28,r:15}],
+  solution:[{x:26,y:62,flip:true}],
+  solutionNote:"One magnet lifts the orb up and over the wall; the woken relay guides it into the coil, which fires it into the brake. Verified by sim replay."
+}
+];
+</script>
+<script>
+"use strict";
+/* ============================================================
+   MAGNETICIAN - UI + 2.5D rendering. Requires MAG (block 1).
+   2D physics, 2.5D presentation: no coordinate transforms, all
+   depth is faked with shadows, extrusion, and gradients.
+   ============================================================ */
+(function(){
+if(typeof document==='undefined'||!document.getElementById) return;
+var $=function(id){return document.getElementById(id);};
+var TAU=Math.PI*2;
+
+/* ---------- persistence ---------- */
+var store=(function(){
+  try{ if(typeof localStorage!=='undefined') return localStorage; }catch(e){}
+  var m={}; return {getItem:function(k){return (k in m)?m[k]:null;},setItem:function(k,v){m[k]=String(v);}};
+})();
+function getN(k,d){ var v=parseInt(store.getItem(k),10); return isNaN(v)?d:v; }
+
+/* ---------- audio ---------- */
+var AC=null, soundOn=store.getItem('mag-sound')!=='0';
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended'){AC.resume();} return AC; }
+function tone(f0,f1,dur,type,vol,delay){
+  if(!soundOn) return; var c=ac(); if(!c) return;
+  var t0=c.currentTime+(delay||0);
+  var o=c.createOscillator(), g=c.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(Math.max(1,f0),t0);
+  if(f1) o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t0+dur);
+  g.gain.setValueAtTime(vol||0.12,t0);
+  g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+  o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+0.02);
+}
+var sfx={
+  place:function(){tone(700,950,0.05,'square',0.07);},
+  flip:function(){tone(320,190,0.07,'triangle',0.12);},
+  remove:function(){tone(520,320,0.06,'triangle',0.09);},
+  coil:function(){tone(130,45,0.2,'sine',0.22); tone(1700,800,0.09,'square',0.05);},
+  win:function(){tone(523,0,0.12,'sine',0.14); tone(659,0,0.12,'sine',0.14,0.11); tone(784,0,0.22,'sine',0.16,0.22);},
+  fail:function(){tone(220,110,0.28,'sine',0.14);},
+  click:function(){tone(620,0,0.04,'square',0.05);},
+  snap:function(){tone(200,90,0.08,'triangle',0.14);}
+};
+
+/* ---------- game state ---------- */
+var G={
+  mode:'title', levelIdx:0, world:null, placements:[], tray:0,
+  showFields:store.getItem('mag-fields')!=='0',
+  paused:false, particles:[], shake:0,
+  reduced: (typeof matchMedia!=='undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)
+};
+var cv=$('cv'), ctx=cv.getContext('2d');
+var DPR=1, scale=1, ox=0, oy=0, cw=0, chh=0;
+function resize(){
+  var r=$('stage').getBoundingClientRect();
+  DPR=Math.min(3,window.devicePixelRatio||1);
+  cw=r.width; chh=r.height;
+  cv.width=Math.round(cw*DPR); cv.height=Math.round(chh*DPR);
+  scale=Math.min(cw/104, chh/154);
+  ox=(cw-100*scale)/2; oy=(chh-150*scale)/2;
+}
+window.addEventListener('resize',resize);
+
+/* ---------- helpers ---------- */
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function shadow(x,y,rx,ry,a){
+  ctx.fillStyle='rgba(0,0,0,'+(a||0.32)+')';
+  ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,TAU); ctx.fill();
+}
+function spawn(x,y,n,color,spd,life,size){
+  if(G.reduced) return;
+  for(var i=0;i<n;i++){
+    if(G.particles.length>160) return;
+    var a=Math.random()*TAU, s=(0.3+Math.random()*0.7)*(spd||40);
+    G.particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+      life:0,max:(life||0.6)*(0.6+Math.random()*0.8),color:color,size:(size||2)*(0.6+Math.random()*0.8)});
+  }
+}
+function updateParticles(dt){
+  for(var i=G.particles.length-1;i>=0;i--){
+    var p=G.particles[i]; p.life+=dt;
+    if(p.life>=p.max){ G.particles.splice(i,1); continue; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.98; p.vy*=0.98;
+  }
+}
+
+/* ---------- 2.5D entity drawing ---------- */
+function drawMagnet(m,t,glow){
+  var s=m.flip?-1:1;
+  shadow(m.x+2,m.y+5,11,4.2);
+  // extrusion (fake thickness)
+  rr(m.x-9,m.y-3.5+3.2,18,7,3.5); ctx.fillStyle='#232833'; ctx.fill();
+  // steel body
+  var g=ctx.createLinearGradient(m.x,m.y-3.5,m.x,m.y+3.5);
+  g.addColorStop(0,'#c2c9d6'); g.addColorStop(0.45,'#8b93a3'); g.addColorStop(1,'#5a6170');
+  rr(m.x-9,m.y-3.5,18,7,3.5); ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=0.8; ctx.stroke();
+  // pole caps: N red at right when !flip
+  var leftIsN = m.flip; // flip swaps
+  drawCap(m.x-9+2.6,m.y,leftIsN,'l');
+  drawCap(m.x+9-2.6,m.y,!leftIsN,'r');
+  if(glow){ ctx.strokeStyle='rgba(232,182,76,0.9)'; ctx.lineWidth=1.6;
+    rr(m.x-11,m.y-5.5,22,11,5); ctx.stroke(); }
+}
+function drawCap(x,y,isN,side){
+  var g=ctx.createLinearGradient(x,y-3.5,x,y+3.5);
+  if(isN){ g.addColorStop(0,'#ff7a7e'); g.addColorStop(1,'#b02025'); }
+  else { g.addColorStop(0,'#6aa8ff'); g.addColorStop(1,'#1f5fc0'); }
+  var w=5.2;
+  ctx.beginPath();
+  if(side==='l'){ ctx.moveTo(x-w/2+2,y-3.5); ctx.arcTo(x-w/2,y-3.5,x-w/2,y,2);
+    ctx.arcTo(x-w/2,y+3.5,x-w/2+2,y+3.5,2); ctx.lineTo(x+w/2,y+3.5); ctx.lineTo(x+w/2,y-3.5); }
+  else { ctx.moveTo(x+w/2-2,y-3.5); ctx.arcTo(x+w/2,y-3.5,x+w/2,y,2);
+    ctx.arcTo(x+w/2,y+3.5,x+w/2-2,y+3.5,2); ctx.lineTo(x-w/2,y+3.5); ctx.lineTo(x-w/2,y-3.5); }
+  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.font='bold 3.4px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(isN?'N':'S',x,y+0.2);
+}
+function drawOrb(o,t){
+  shadow(o.x+2,o.y+4.5,o.r*1.05,o.r*0.5,0.4);
+  var g=ctx.createRadialGradient(o.x-1.2,o.y-1.5,0.4,o.x,o.y,o.r);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.45,'#c6cdd9'); g.addColorStop(1,'#454c5b');
+  ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,TAU); ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=0.7; ctx.stroke();
+  var sx=Math.max(-1.4,Math.min(1.4,o.vx*0.006)), sy=Math.max(-1.4,Math.min(1.4,o.vy*0.006));
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.beginPath(); ctx.arc(o.x-1.1+sx,o.y-1.35+sy,0.85,0,TAU); ctx.fill();
+  ctx.fillStyle='#e5484d'; ctx.font='bold 2.6px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('N',o.x,o.y+1.1);
+}
+function drawCoil(cl,cs,t){
+  var rx=cl.r, ry=cl.r*0.58;
+  shadow(cl.x+2,cl.y+5,rx*0.95,4.5);
+  ctx.save();
+  if(cs.armed && !G.reduced){ ctx.shadowColor='rgba(232,182,76,0.75)'; ctx.shadowBlur=10+4*Math.sin(t*4); }
+  var g=ctx.createLinearGradient(cl.x-rx,cl.y,cl.x+rx,cl.y);
+  g.addColorStop(0,'#8a4d16'); g.addColorStop(0.5,'#e89b3d'); g.addColorStop(1,'#8a4d16');
+  ctx.strokeStyle = cs.flash>0 ? '#ffffff' : g;
+  ctx.lineWidth=5.5;
+  ctx.beginPath(); ctx.ellipse(cl.x,cl.y,rx,ry,0,0,TAU); ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(60,32,8,0.8)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.ellipse(cl.x,cl.y,rx-3.4,ry-2.4,0,0,TAU); ctx.stroke();
+  // axis hint
+  ctx.strokeStyle='rgba(232,182,76,0.35)'; ctx.lineWidth=1.4;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cl.x-cl.ax*rx,cl.y-cl.ay*rx);
+  ctx.lineTo(cl.x+cl.ax*rx*1.7,cl.y+cl.ay*rx*1.7); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+function drawBrake(z,t){
+  var rx=z.r, ry=z.r*0.6;
+  ctx.fillStyle='rgba(90,200,255,0.10)';
+  ctx.beginPath(); ctx.ellipse(z.x,z.y,rx,ry,0,0,TAU); ctx.fill();
+  ctx.strokeStyle='rgba(120,215,255,0.4)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.ellipse(z.x,z.y,rx,ry,0,0,TAU); ctx.stroke();
+  if(!G.reduced){
+    ctx.strokeStyle='rgba(150,225,255,0.30)'; ctx.lineWidth=1;
+    for(var i=0;i<3;i++){
+      var ph=t*2.2+i*2.1;
+      ctx.beginPath();
+      for(var a=0;a<=Math.PI;a+=0.3){
+        var px=z.x-rx*0.8+ (rx*1.6)*(a/Math.PI);
+        var py=z.y+Math.sin(a*3+ph)*ry*0.35*(1-Math.abs(a/Math.PI-0.5));
+        if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+    }
+  }
+}
+function drawCradle(c,t){
+  var rx=c.r, ry=c.r*0.62;
+  shadow(c.x+1,c.y+4,rx,4);
+  var pulse=0.5+0.5*Math.sin(t*2.4);
+  ctx.fillStyle='rgba(10,12,18,0.9)';
+  ctx.beginPath(); ctx.ellipse(c.x,c.y,rx,ry,0,0,TAU); ctx.fill();
+  ctx.strokeStyle='rgba(232,182,76,'+(0.55+0.35*pulse)+')'; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.ellipse(c.x,c.y,rx,ry,0,0,TAU); ctx.stroke();
+  var g=ctx.createRadialGradient(c.x,c.y,1,c.x,c.y,rx*0.7);
+  g.addColorStop(0,'rgba(232,182,76,'+(0.20+0.12*pulse)+')'); g.addColorStop(1,'rgba(232,182,76,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(c.x,c.y,rx*0.7,ry*0.7,0,0,TAU); ctx.fill();
+}
+function drawLauncher(l,t){
+  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.4;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.arc(l.x,l.y,6,0,TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font='bold 4px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('START',l.x,l.y-10);
+}
+function drawWall(r){
+  shadow(r.x+r.w/2+1.5,r.y+r.h+2,r.w/2,3,0.3);
+  // front face (extrusion)
+  rr(r.x,r.y+3.5,r.w,r.h,2); ctx.fillStyle='#1d2230'; ctx.fill();
+  // top face
+  var g=ctx.createLinearGradient(r.x,r.y,r.x,r.y+r.h);
+  g.addColorStop(0,'#4a5265'); g.addColorStop(1,'#333a49');
+  rr(r.x,r.y,r.w,r.h,2); ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=0.8; ctx.stroke();
+}
+function drawSteel(b,t){
+  shadow(b.x+1.5,b.y+4,b.r,3.4);
+  rr(b.x-b.r,b.y-b.r+2.6,b.r*2,b.r*2,3); ctx.fillStyle='#242a36'; ctx.fill();
+  var g=ctx.createLinearGradient(b.x,b.y-b.r,b.x,b.y+b.r);
+  if(b.mag){ g.addColorStop(0,'#a8b2c4'); g.addColorStop(1,'#5f6779'); }
+  else { g.addColorStop(0,'#6d7484'); g.addColorStop(1,'#414753'); }
+  rr(b.x-b.r,b.y-b.r,b.r*2,b.r*2,3); ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle=b.mag?'rgba(232,182,76,0.7)':'rgba(255,255,255,0.10)';
+  ctx.lineWidth=1.2; ctx.stroke();
+  if(b.mag && !G.reduced){
+    // crackling arcs toward the source
+    ctx.strokeStyle='rgba(180,220,255,0.5)'; ctx.lineWidth=1;
+    var dx=b.sx-b.x, dy=b.sy-b.y, d=Math.max(1,Math.sqrt(dx*dx+dy*dy));
+    var nx=dx/d, ny=dy/d, ex=b.x+nx*b.r, ey=b.y+ny*b.r;
+    ctx.beginPath(); ctx.moveTo(ex,ey);
+    var segs=4;
+    for(var i=1;i<=segs;i++){
+      var px2=ex+nx*(d-b.r*2)*i/segs + (Math.random()-0.5)*3;
+      var py2=ey+ny*(d-b.r*2)*i/segs + (Math.random()-0.5)*3;
+      ctx.lineTo(px2,py2);
+    }
+    ctx.stroke();
+  }
+}
+function drawPulse(p,mode,left,t){
+  var m={x:p.x,y:p.y,flip:mode<0};
+  drawMagnet(m,t,false);
+  // charge ring
+  var col = mode>0 ? 'rgba(232,182,76,0.9)' : (mode<0 ? 'rgba(170,120,255,0.9)' : 'rgba(120,130,150,0.5)');
+  ctx.strokeStyle=col; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(p.x,p.y,14,0,TAU); ctx.stroke();
+  if(left>0){
+    var cyc=0,i; for(i=0;i<p.phases.length;i++) cyc+=p.phases[i].dur;
+    var frac=left/cyc;
+    ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(p.x,p.y,14,-Math.PI/2,-Math.PI/2+frac*TAU); ctx.stroke();
+  }
+  if(mode!==0 && !G.reduced){
+    ctx.fillStyle= mode>0 ? 'rgba(232,182,76,0.12)' : 'rgba(170,120,255,0.12)';
+    ctx.beginPath(); ctx.arc(p.x,p.y,14,0,TAU); ctx.fill();
+  }
+}
+function drawFields(w){
+  ctx.strokeStyle='rgba(160,200,255,0.10)'; ctx.lineWidth=1;
+  w.placed.forEach(function(m){
+    var s=m.flip?-1:1;
+    var nx=m.x+9*s, ny=m.y, sx=m.x-9*s, sy=m.y; // N then S
+    for(var k=-1;k<=1;k++){
+      ctx.beginPath();
+      ctx.moveTo(nx,ny+k*2);
+      ctx.quadraticCurveTo(m.x, m.y-10-Math.abs(k)*5, sx, sy+k*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(nx,ny+k*2);
+      ctx.quadraticCurveTo(m.x, m.y+10+Math.abs(k)*5, sx, sy+k*2);
+      ctx.stroke();
+    }
+  });
+}
+
+/* ---------- board + frame ---------- */
+function drawBoard(t){
+  // workbench
+  var g=ctx.createLinearGradient(0,-4,0,154);
+  g.addColorStop(0,'#232a3a'); g.addColorStop(1,'#161b27');
+  rr(-3,-3,106,156,6); ctx.fillStyle='#0d1017'; ctx.fill();
+  rr(-2,-4,104,154,6); ctx.fillStyle=g; ctx.fill();
+  // subtle grid
+  ctx.strokeStyle='rgba(255,255,255,0.035)'; ctx.lineWidth=0.6;
+  for(var x=10;x<100;x+=10){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,150); ctx.stroke(); }
+  for(var y=10;y<150;y+=10){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(100,y); ctx.stroke(); }
+  // parallax dust
+  if(!G.reduced && G.world){
+    ctx.fillStyle='rgba(180,200,230,0.10)';
+    var px=G.world.orb.x*0.03, py=G.world.orb.y*0.03;
+    for(var i=0;i<24;i++){
+      var dx=((i*37.3)%100)-px, dy=((i*53.7)%150)-py;
+      ctx.fillRect(dx,dy,1.1,1.1);
+    }
+  }
+}
+function render(t){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,cw,chh);
+  ctx.setTransform(DPR*scale,0,0,DPR*scale,DPR*ox,DPR*oy);
+  if(G.shake>0 && !G.reduced){
+    var s=G.shake*2;
+    ctx.translate((Math.random()-0.5)*s,(Math.random()-0.5)*s);
+    G.shake*=0.88; if(G.shake<0.2) G.shake=0;
+  }
+  drawBoard(t);
+  var w=G.world; if(!w){ return; }
+  var L=w.level, i;
+  for(i=0;i<(L.brakes||[]).length;i++) drawBrake(L.brakes[i],t);
+  drawCradle(L.cradle,t);
+  if(G.showFields) drawFields(w);
+  for(i=0;i<w.walls.length;i++) drawWall(w.walls[i]);
+  drawLauncher(L.launcher,t);
+  // depth sort: steel, coils, pulses, magnets, orb
+  var ents=[];
+  w.steel.forEach(function(b){ents.push({y:b.y,f:function(){drawSteel(b,t);}});});
+  (L.coils||[]).forEach(function(cl,idx){ents.push({y:cl.y,f:function(){drawCoil(cl,w.coils[idx],t);}});});
+  (L.pulses||[]).forEach(function(p){ents.push({y:p.y,f:function(){
+    drawPulse(p,MAG.pulseMode(p,w.t),MAG.pulsePhaseLeft(p,w.t),t);}});});
+  w.placed.forEach(function(m){ents.push({y:m.y,f:function(){drawMagnet(m,t,m===G.sel);}});});
+  ents.push({y:w.orb.y+10,f:function(){drawOrb(w.orb,t);}});
+  ents.sort(function(a,b){return a.y-b.y;});
+  ents.forEach(function(e){e.f();});
+  // particles
+  for(i=0;i<G.particles.length;i++){
+    var p=G.particles[i], a=1-p.life/p.max;
+    ctx.globalAlpha=a; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,TAU); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ---------- UI state ---------- */
+function setOverlay(id){
+  ['ovTitle','ovHow','ovLevels','ovPause','ovWin','ovFail'].forEach(function(o){
+    $(o).classList.toggle('hidden', o!==id);
+  });
+}
+function updateTop(){
+  var L=MAG.LEVELS[G.levelIdx];
+  $('lvlName').innerHTML=(G.mode==='build'||G.mode==='sim'||G.mode==='pause')
+    ? ('LEVEL '+(G.levelIdx+1)+' - '+L.name+'<small>'+L.sub+'</small>') : 'MAGNETICIAN<small>pick a level</small>';
+  $('bFields').classList.toggle('on',G.showFields);
+  $('bSound').classList.toggle('on',soundOn);
+}
+function updateTray(){
+  var tr=$('tray'); tr.innerHTML='';
+  for(var i=0;i<G.tray;i++){
+    var d=document.createElement('div'); d.className='tpiece full';
+    d.innerHTML='<div class="bar"></div>';
+    d.setAttribute('role','button'); d.setAttribute('aria-label','Add magnet');
+    d.onclick=function(){ addMagnet(); };
+    tr.appendChild(d);
+  }
+  var L=MAG.LEVELS[G.levelIdx];
+  $('parInfo').innerHTML='PAR <b>'+L.par+'</b><br>USED <b>'+G.placements.length+'</b>';
+  $('cRelease').disabled = (G.mode!=='build');
+}
+function addMagnet(){
+  if(G.mode!=='build'||G.tray<=0) return;
+  var x=50,y=75,i,ok=false;
+  outer:
+  for(var ry=60;ry<=100;ry+=12) for(var rx=30;rx<=70;rx+=10){
+    ok=true;
+    for(i=0;i<G.placements.length;i++){
+      if(Math.abs(G.placements[i].x-rx)<20&&Math.abs(G.placements[i].y-ry)<14){ok=false;break;}
+    }
+    if(ok){x=rx;y=ry;break outer;}
+  }
+  G.placements.push({x:x,y:y,flip:false});
+  G.tray--; sfx.place();
+  spawn(x,y,6,'#e8b64c',30,0.4,2);
+  updateTray();
+}
+function loadLevel(i){
+  G.levelIdx=i; var L=MAG.LEVELS[i];
+  G.placements=(L.preplaced||[]).map(function(m){return {x:m.x,y:m.y,flip:!!m.flip};});
+  G.tray=L.tray; G.world=MAG.makeWorld(L); G.world.placed=G.placements;
+  G.mode='build'; G.paused=false; G.particles=[]; G.sel=null; prevCoilFlash=[];
+  setOverlay(null); updateTop(); updateTray();
+}
+function resetSim(){
+  var L=MAG.LEVELS[G.levelIdx];
+  G.world=MAG.makeWorld(L); G.world.placed=G.placements;
+  G.mode='build'; G.paused=false; setOverlay(null); updateTop(); updateTray();
+}
+function release(){
+  if(G.mode!=='build') return;
+  G.mode='sim'; G.world.t=0;
+  sfx.click(); updateTop(); updateTray();
+}
+var winFlavs=["Beautiful. Do it with fewer magnets.","The fields obey. Nice.","Physics applauds.","Clean. Very clean.","The orb has chosen wisely."];
+function onWin(){
+  G.mode='win';
+  var L=MAG.LEVELS[G.levelIdx], used=G.placements.length, isPar=used<=L.par;
+  store.setItem('mag-done-'+G.levelIdx,'1');
+  var prev=getN('mag-par-'+G.levelIdx,999);
+  if(used<prev) store.setItem('mag-par-'+G.levelIdx,used);
+  var un=getN('mag-unlocked',0);
+  if(G.levelIdx+1>un&&G.levelIdx+1<12) store.setItem('mag-unlocked',G.levelIdx+1);
+  sfx.win();
+  spawn(L.cradle.x,L.cradle.y,46,'#e8b64c',70,0.9,2.6);
+  spawn(L.cradle.x,L.cradle.y,20,'#fff2c8',40,0.7,2);
+  if(!G.reduced) G.shake=3;
+  $('winTitle').textContent=isPar?'BEAUTIFUL.':'SOLVED.';
+  $('winFlav').textContent=isPar?winFlavs[Math.floor(Math.random()*winFlavs.length)]:'Solved. Par is '+L.par+' - trim the fat.';
+  $('winStats').innerHTML='Magnets used: <b>'+used+'</b> (par '+L.par+')'+(isPar?' <b>★</b>':'');
+  $('bNext').style.display=(G.levelIdx<11)?'block':'none';
+  setOverlay('ovWin'); updateTop(); updateTray();
+}
+function onFail(){
+  G.mode='fail'; sfx.fail();
+  spawn(G.world.orb.x,G.world.orb.y,18,'#8a93a6',60,0.6,2);
+  setOverlay('ovFail'); updateTop();
+}
+function buildLevelGrid(){
+  var gr=$('lvlGrid'); gr.innerHTML='';
+  var un=getN('mag-unlocked',0);
+  MAG.LEVELS.forEach(function(L,i){
+    var b=document.createElement('button');
+    b.className='lvl'+(i<=un?'':' locked')+((store.getItem('mag-done-'+i)==='1')?' done':'');
+    var star=(getN('mag-par-'+i,999)<=L.par)?'<span class="st">★</span>':'';
+    b.innerHTML='<span class="n">'+(i<=un?(i+1):'·')+'</span>'+L.name+'<br>'+star;
+    if(i<=un) b.onclick=function(){ sfx.click(); loadLevel(i); };
+    gr.appendChild(b);
+  });
+}
+
+/* ---------- input ---------- */
+function toWorld(e){
+  var r=cv.getBoundingClientRect();
+  return {x:(e.clientX-r.left-ox)/scale, y:(e.clientY-r.top-oy)/scale};
+}
+var drag=null, lastTap={m:null,t:0};
+cv.addEventListener('pointerdown',function(e){
+  if(G.mode!=='build') return;
+  var p=toWorld(e), i, m=null;
+  for(i=G.placements.length-1;i>=0;i--){
+    var q=G.placements[i];
+    if(Math.abs(q.x-p.x)<13&&Math.abs(q.y-p.y)<10){ m=q; break; }
+  }
+  if(m){
+    drag={m:m,dx:m.x-p.x,dy:m.y-p.y,moved:false,t0:performance.now(),sx:p.x,sy:p.y};
+    G.sel=m; cv.setPointerCapture(e.pointerId);
+  }
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag||G.mode!=='build') return;
+  var p=toWorld(e);
+  if(Math.hypot(p.x-drag.sx,p.y-drag.sy)>6) drag.moved=true;
+  if(drag.moved){
+    drag.m.x=Math.max(4,Math.min(96,p.x+drag.dx));
+    drag.m.y=Math.max(4,Math.min(146,p.y+drag.dy));
+  }
+});
+cv.addEventListener('pointerup',function(e){
+  if(!drag) return;
+  var d=drag; drag=null; G.sel=null;
+  if(G.mode!=='build') return;
+  if(!d.moved){
+    var now=performance.now();
+    if(lastTap.m===d.m && now-lastTap.t<380){
+      // double-tap: back to tray
+      var ix=G.placements.indexOf(d.m);
+      if(ix>=0){ G.placements.splice(ix,1); G.tray++; sfx.remove(); updateTray(); }
+      lastTap={m:null,t:0};
+    } else {
+      d.m.flip=!d.m.flip; sfx.flip();
+      spawn(d.m.x,d.m.y,5,'#9adcff',26,0.35,1.8);
+      lastTap={m:d.m,t:now};
+    }
+  }
+});
+cv.addEventListener('pointercancel',function(){ drag=null; G.sel=null; });
+
+/* ---------- buttons ---------- */
+$('cRelease').onclick=release;
+$('cReset').onclick=function(){ if(G.mode==='sim'||G.mode==='fail'){ sfx.click(); resetSim(); } };
+$('cClear').onclick=function(){
+  if(G.mode!=='build') return;
+  G.tray+=G.placements.length; G.placements.length=0;
+  sfx.remove(); updateTray();
+};
+$('bMenu').onclick=function(){ sfx.click(); buildLevelGrid(); setOverlay('ovLevels'); };
+$('bLvlBack').onclick=function(){ sfx.click();
+  if(G.mode==='title'){ setOverlay('ovTitle'); } else { setOverlay(null); }
+  updateTop();
+};
+$('bFields').onclick=function(){ G.showFields=!G.showFields; store.setItem('mag-fields',G.showFields?'1':'0'); sfx.click(); updateTop(); };
+$('bSound').onclick=function(){ soundOn=!soundOn; store.setItem('mag-sound',soundOn?'1':'0'); sfx.click(); updateTop(); };
+$('bPause').onclick=function(){
+  if(G.mode==='sim'||G.mode==='build'){ G.pausedFrom=G.mode; G.mode='pause'; setOverlay('ovPause'); sfx.click(); updateTop(); }
+};
+$('bResume').onclick=function(){ sfx.click(); setOverlay(null); G.mode=G.pausedFrom||'build'; updateTop(); updateTray(); };
+$('bRestart').onclick=function(){ sfx.click(); resetSim(); };
+$('bQuit').onclick=function(){ sfx.click(); G.mode='title'; buildLevelGrid(); setOverlay('ovLevels'); updateTop(); };
+$('bStart').onclick=function(){ sfx.click(); buildLevelGrid(); setOverlay('ovLevels'); };
+$('bHow').onclick=function(){ sfx.click(); setOverlay('ovHow'); };
+$('bHowBack').onclick=function(){ sfx.click(); setOverlay('ovTitle'); };
+$('bNext').onclick=function(){ sfx.click(); if(G.levelIdx<11) loadLevel(G.levelIdx+1); };
+$('bReplay').onclick=function(){ sfx.click(); resetSim(); };
+$('bWinLevels').onclick=function(){ sfx.click(); buildLevelGrid(); setOverlay('ovLevels'); };
+$('bRetry').onclick=function(){ sfx.click(); resetSim(); };
+$('bFailLevels').onclick=function(){ sfx.click(); buildLevelGrid(); setOverlay('ovLevels'); };
+
+/* ---------- main loop ---------- */
+var lastT=0, prevCoilFlash=[];
+function frame(ts){
+  requestAnimationFrame(frame);
+  var dt=Math.min(0.05,((ts-lastT)/1000)||0.016); lastT=ts;
+  var t=ts/1000;
+  if(G.world&&(G.mode==='sim')&&!G.world.result){
+    MAG.stepWorld(G.world,dt);
+    // coil fire sfx + shake
+    G.world.coils.forEach(function(cs,idx){
+      var was=prevCoilFlash[idx]||0;
+      if(cs.flash>0.5&&was<=0.5){
+        sfx.coil(); if(!G.reduced) G.shake=4;
+        var cl=G.world.level.coils[idx];
+        spawn(cl.x+cl.ax*cl.r,cl.y+cl.ay*cl.r,14,'#e8b64c',80,0.5,2.4);
+      }
+      prevCoilFlash[idx]=cs.flash;
+    });
+    if(G.world.result==='win') onWin();
+    else if(G.world.result==='fail') onFail();
+  }
+  updateParticles(dt);
+  render(t);
+}
+
+/* ---------- boot ---------- */
+resize();
+setTimeout(resize,60);
+G.mode='title';
+setOverlay('ovTitle'); updateTop();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
