@@ -26,7 +26,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
 #traybar{display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:72px;
   background:var(--panel);border-top:1px solid #232b3d;}
 #trayLabel{font-size:11px;color:var(--dim);letter-spacing:1px;}
-#tray{display:flex;gap:8px;flex:1;}
+#tray{display:flex;gap:8px;flex:1;flex-wrap:wrap;}
 .tpiece{width:56px;height:48px;border-radius:10px;border:2px dashed #3a4560;
   background:#1b2233;position:relative;cursor:pointer;}
 .tpiece.full{border-style:solid;border-color:#4a5878;}
@@ -393,14 +393,14 @@ return {
    ============================================================ */
 MAG.LEVELS = [
 {
-  name:"First Spark", sub:"Blue pulls. Red pushes.", tray:2, par:1,
+  name:"First Spark", sub:"Blue pulls. Red pushes.", tray:6, par:1,
   launcher:{x:20,y:128}, cradle:{x:80,y:24,r:9},
   brakes:[{x:80,y:24,r:15}],
   solution:[{x:86,y:24,flip:false}],
   solutionNote:"S pole parked just past the cradle pulls the orb on a straight line through the brake into the cradle."
 },
 {
-  name:"The Long Way", sub:"Walls are just suggestions.", tray:2, par:1,
+  name:"The Long Way", sub:"Walls are just suggestions.", tray:6, par:1,
   launcher:{x:20,y:120}, cradle:{x:80,y:90,r:9},
   walls:[{x:46,y:0,w:12,h:100}],
   brakes:[{x:80,y:90,r:15}],
@@ -408,7 +408,7 @@ MAG.LEVELS = [
   solutionNote:"S pole beyond the cradle; the straight pull line passes under the wall end and through the brake."
 },
 {
-  name:"Flip It", sub:"Something is backwards.", tray:1, par:0,
+  name:"Flip It", sub:"Something is backwards.", tray:5, par:0,
   launcher:{x:20,y:100}, cradle:{x:80,y:100,r:9},
   brakes:[{x:80,y:100,r:15}],
   preplaced:[{x:95,y:100,flip:true}],
@@ -416,7 +416,7 @@ MAG.LEVELS = [
   solutionNote:"The magnet starts backwards, pushing the orb away. One tap flips it: the S pole then pulls the orb on-axis into the brake and cradle."
 },
 {
-  name:"The Coil", sub:"Feed the ring.", tray:2, par:1,
+  name:"The Coil", sub:"Feed the ring.", tray:7, par:1,
   launcher:{x:12,y:100}, cradle:{x:78,y:100,r:9},
   coils:[{x:44,y:100,r:9,ax:1,ay:0,power:60}],
   brakes:[{x:78,y:100,r:15}],
@@ -424,7 +424,7 @@ MAG.LEVELS = [
   solutionNote:"S pole past the cradle pulls the orb on-axis straight through the coil mouth; the coil fires it onward into the brake."
 },
 {
-  name:"Live Wire", sub:"Wake the gray blocks.", tray:2, par:1,
+  name:"Live Wire", sub:"Wake the gray blocks.", tray:7, par:1,
   launcher:{x:16,y:100}, cradle:{x:88,y:100,r:9},
   steel:[{x:34,y:100,r:7},{x:56,y:100,r:7},{x:78,y:100,r:6},{x:92,y:100,r:6}],
   brakes:[{x:88,y:100,r:16}],
@@ -432,7 +432,7 @@ MAG.LEVELS = [
   solutionNote:"Magnet wakes the first block from above (gentle on the orb); the magnetized relay hands the orb block to block, and the last block sits inside the cradle zone to hold it."
 },
 {
-  name:"Perfect Timing", sub:"The magnet has a rhythm.", tray:2, par:1,
+  name:"Perfect Timing", sub:"The magnet has a rhythm.", tray:6, par:1,
   launcher:{x:20,y:128}, cradle:{x:80,y:30,r:9},
   pulses:[{x:52,y:84,phases:[{dur:2.0,mode:1},{dur:1.5,mode:0},{dur:2.0,mode:-1},{dur:1.5,mode:0}]}],
   brakes:[{x:80,y:30,r:15}],
@@ -440,14 +440,14 @@ MAG.LEVELS = [
   solutionNote:"One magnet lofts the orb into the pulse lane; the pulse rhythm grabs it and throws it to the brake. Verified by sim replay."
 },
 {
-  name:"Catch It", sub:"Come in hot.", tray:2, par:1,
+  name:"Catch It", sub:"Come in hot.", tray:7, par:1,
   launcher:{x:14,y:128}, cradle:{x:88,y:128,r:9},
   brakes:[{x:88,y:128,r:18}],
   solution:[{x:2,y:128,flip:false}],
   solutionNote:"Close N pole shoves the orb flat across the board; the big brake eats the speed and pins it into the cradle."
 },
 {
-  name:"Bank Shot", sub:"Thread the needle.", tray:3, par:1,
+  name:"Bank Shot", sub:"Thread the needle.", tray:8, par:1,
   launcher:{x:16,y:120}, cradle:{x:84,y:50,r:9},
   walls:[{x:40,y:0,w:12,h:80}],
   coils:[{x:60,y:78,r:9,ax:0.61,ay:-0.8,power:60}],
@@ -456,7 +456,7 @@ MAG.LEVELS = [
   solutionNote:"A gentle drift magnet up-left walks the orb into the coil mouth; the coil fires it on-axis into the brake. Verified by sim replay."
 },
 {
-  name:"Chain Maze", sub:"Wake the relay.", tray:2, par:1,
+  name:"Chain Maze", sub:"Wake the relay.", tray:8, par:1,
   launcher:{x:12,y:100}, cradle:{x:85,y:44,r:9},
   steel:[{x:28,y:100,r:7},{x:48,y:92,r:7},{x:66,y:80,r:7},{x:80,y:64,r:7},{x:88,y:46,r:6}],
   brakes:[{x:85,y:44,r:15}],
@@ -464,7 +464,7 @@ MAG.LEVELS = [
   solutionNote:"One magnet wakes the whole relay; the magnetized chain hands the orb along and traps it at the cradle. Verified by sim replay."
 },
 {
-  name:"Syncopation", sub:"Ride the rhythm.", tray:3, par:1,
+  name:"Syncopation", sub:"Ride the rhythm.", tray:8, par:1,
   launcher:{x:16,y:130}, cradle:{x:86,y:40,r:9},
   pulses:[{x:50,y:90,phases:[{dur:2.0,mode:1},{dur:1.2,mode:0},{dur:2.0,mode:-1},{dur:1.2,mode:0}]}],
   brakes:[{x:86,y:40,r:16}],
@@ -472,7 +472,7 @@ MAG.LEVELS = [
   solutionNote:"A low magnet lofts the orb into the pulse lane; the pulse cycle grabs and throws it to the brake. Verified by sim replay."
 },
 {
-  name:"The Works", sub:"Relay into the coil.", tray:2, par:1,
+  name:"The Works", sub:"Relay into the coil.", tray:9, par:1,
   launcher:{x:14,y:120}, cradle:{x:90,y:30,r:9},
   steel:[{x:30,y:104,r:7},{x:48,y:92,r:7},{x:64,y:82,r:7}],
   coils:[{x:80,y:74,r:9,ax:0.6,ay:-0.8,power:60}],
@@ -481,7 +481,7 @@ MAG.LEVELS = [
   solutionNote:"One magnet wakes the relay from afar; the blocks hand the orb up-right into the coil mouth, and the coil fires it into the brake. Verified by sim replay."
 },
 {
-  name:"Gauntlet", sub:"The full mad scientist.", tray:3, par:1,
+  name:"Gauntlet", sub:"The full mad scientist.", tray:10, par:1,
   launcher:{x:14,y:132}, cradle:{x:90,y:28,r:9},
   walls:[{x:36,y:70,w:12,h:80}],
   steel:[{x:22,y:108,r:7},{x:22,y:84,r:7},{x:44,y:58,r:7}],
