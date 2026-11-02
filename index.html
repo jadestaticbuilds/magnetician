@@ -633,6 +633,10 @@ function resize(){
   ox=(cw-100*scale)/2; oy=(chh-150*scale)/2;
 }
 window.addEventListener('resize',resize);
+// re-run resize when the stage size changes (e.g. tray populates after level select)
+if(window.ResizeObserver){
+  new ResizeObserver(function(){ resize(); }).observe(document.getElementById('stage'));
+}
 
 /* ---------- helpers ---------- */
 function rr(x,y,w,h,r){
