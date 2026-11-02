@@ -45,7 +45,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
 .tpiece .bar::after{content:"";position:absolute;right:0;top:0;bottom:0;width:40%;
   background:var(--blue);border-radius:0 8px 8px 0;}
 .tpiece.nudge .bar{left:17px;right:17px;}
+.tpiece.spark .bar{left:21px;right:21px;height:12px;top:18px;}
+.tpiece.anchor .bar{left:12px;right:12px;}
 .tpiece.titan .bar{left:3px;right:3px;}
+.tpiece.brake .bar{display:none;}
+.tpiece.brake .zone{position:absolute;left:12px;right:12px;top:6px;bottom:12px;border-radius:50%;
+  border:2px dashed #8ca6d8;background:rgba(120,140,180,0.15);}
 .tpiece .tag{position:absolute;left:0;right:0;bottom:2px;text-align:center;
   font-size:9px;letter-spacing:1px;color:var(--dim);}
 #parInfo{font-size:12px;color:var(--dim);text-align:right;line-height:1.5;white-space:nowrap;}
@@ -207,21 +212,24 @@ const MAG = (function(){
 const TAU = Math.PI*2;
 // ---- tuning constants ----
 const K = 90000;          // pole force constant (F = K*q*c*str/(d^2+SOFT^2))
-const SOFT = 20;          // softening length: kills the near-field force
-                          // explosion so small magnet moves stay gentle
+const SOFT = 26;          // softening length: gentler near-field so small
+                          // magnet moves stay smooth (iter2: 20 -> 26)
 const DMIN = 7;           // distance clamp (safety, rarely binds now)
 const POLE_FCAP = 420;    // per-pole force cap
 const TOTAL_FCAP = 1000;  // total force cap
-const DRAG = 0.10;        // mild air drag (per second factor)
+const DRAG = 0.14;        // mild air drag (iter2: 0.10 -> 0.14 for control)
 const REST = 0.35;        // wall restitution
 const MAG_R = 55;         // live-steel magnetization radius
 const SUB = 1/120;        // fixed physics substep
 const WIN_SPEED = 7, WIN_HOLD = 0.45;
-// ---- magnet types: the toolbox ----
+// ---- magnet types: the toolbox (iter2: +spark, +anchor, +brake) ----
 const TYPES = {
   classic:{half:9,  str:1.0,  label:'Classic'},
   nudge:  {half:6,  str:0.35, label:'Nudge'},
-  titan:  {half:13, str:1.8,  label:'Titan'}
+  spark:  {half:4,  str:0.18, label:'Spark'},    // micro adjustments
+  anchor: {half:7,  str:2.6,  label:'Anchor'},   // precision power
+  titan:  {half:13, str:1.8,  label:'Titan'},
+  brake:  {isBrake:true, r:12, label:'Brake'}    // placeable damping zone
 };
 function typeOf(m){ return TYPES[m.type]||TYPES.classic; }
 
@@ -280,11 +288,12 @@ function pulsePhaseLeft(p, t){
   return 0;
 }
 
-// collect all active poles: {x,y,c,str}
+// collect all active poles: {x,y,c,str} (brakes are not poles)
 function collectPoles(w){
   const poles=[];
   w.placed.forEach(function(m){
     const T = typeOf(m);
+    if(T.isBrake) return;
     const s = m.flip ? -1 : 1;
     poles.push({x:m.x+T.half, y:m.y, c: s*1,  str:T.str});
     poles.push({x:m.x-T.half, y:m.y, c: s*-1, str:T.str});
@@ -387,10 +396,16 @@ function substep(w, dt){
   const fm=Math.sqrt(fx*fx+fy*fy);
   if(fm>TOTAL_FCAP){ fx*=TOTAL_FCAP/fm; fy*=TOTAL_FCAP/fm; }
   o.vx+=fx*dt; o.vy+=fy*dt;
-  // brake fields (eddy damping)
+  // brake fields (eddy damping) — level brakes + player-placed brakes
   (L.brakes||[]).forEach(function(z){
     const dx=o.x-z.x, dy=o.y-z.y;
     if(dx*dx+dy*dy < z.r*z.r){ const k=Math.max(0,1-7*dt); o.vx*=k; o.vy*=k; }
+  });
+  w.placed.forEach(function(m){
+    const T=typeOf(m);
+    if(!T.isBrake) return;
+    const dx=o.x-m.x, dy=o.y-m.y;
+    if(dx*dx+dy*dy < T.r*T.r){ const k=Math.max(0,1-7*dt); o.vx*=k; o.vy*=k; }
   });
   // cradle catch damping (gentle capture assist)
   const c=L.cradle, cdx=o.x-c.x, cdy=o.y-c.y, cd=Math.sqrt(cdx*cdx+cdy*cdy);
@@ -455,14 +470,14 @@ return {
    ============================================================ */
 MAG.LEVELS = [
 {
-  name:"First Spark", sub:"Blue pulls. Red pushes.", tray:{classic:4,nudge:2}, par:1,
+  name:"First Spark", sub:"Blue pulls. Red pushes.", tray:{classic:10,nudge:6,spark:4}, par:1,
   launcher:{x:20,y:128}, cradle:{x:80,y:24,r:9},
   brakes:[{x:80,y:24,r:15}],
   solution:[{x:86,y:24,flip:false}],
   solutionNote:"S pole parked just past the cradle pulls the orb on a straight line through the brake into the cradle."
 },
 {
-  name:"The Long Way", sub:"Walls are just suggestions.", tray:{classic:4,nudge:2}, par:1,
+  name:"The Long Way", sub:"Walls are just suggestions.", tray:{classic:10,nudge:6,spark:4}, par:1,
   launcher:{x:20,y:120}, cradle:{x:80,y:90,r:9},
   walls:[{x:46,y:0,w:12,h:100}],
   brakes:[{x:80,y:90,r:15}],
@@ -470,15 +485,15 @@ MAG.LEVELS = [
   solutionNote:"S pole beyond the cradle; the straight pull line passes under the wall end and through the brake."
 },
 {
-  name:"Flip It", sub:"Something is backwards.", tray:{classic:3,nudge:2}, par:0,
+  name:"Flip It", sub:"Something is backwards.", tray:{classic:8,nudge:5,spark:4}, par:0,
   launcher:{x:20,y:100}, cradle:{x:80,y:100,r:9},
   brakes:[{x:80,y:100,r:15}],
   preplaced:[{x:95,y:100,flip:true}],
-  solution:[{x:95,y:100,flip:false}],
-  solutionNote:"The magnet starts backwards, pushing the orb away. One tap flips it: the S pole then pulls the orb on-axis into the brake and cradle."
+  solution:[{x:87,y:98,flip:false}],
+  solutionNote:"The magnet starts backwards, pushing the orb away. One tap flips it: the S pole then pulls the orb on-axis into the brake and cradle. (iter2: retuned for the softer force curve.)"
 },
 {
-  name:"The Coil", sub:"Feed the ring.", tray:{classic:4,nudge:2,titan:1}, par:1,
+  name:"The Coil", sub:"Feed the ring.", tray:{classic:10,nudge:6,spark:4,titan:3,anchor:2}, par:1,
   launcher:{x:12,y:100}, cradle:{x:78,y:100,r:9},
   coils:[{x:44,y:100,r:9,ax:1,ay:0,power:60}],
   brakes:[{x:78,y:100,r:15}],
@@ -486,7 +501,7 @@ MAG.LEVELS = [
   solutionNote:"S pole past the cradle pulls the orb on-axis straight through the coil mouth; the coil fires it onward into the brake."
 },
 {
-  name:"Live Wire", sub:"Wake the gray blocks.", tray:{classic:4,nudge:2,titan:1}, par:1,
+  name:"Live Wire", sub:"Wake the gray blocks.", tray:{classic:10,nudge:6,spark:4,titan:3,anchor:2}, par:1,
   launcher:{x:16,y:100}, cradle:{x:88,y:100,r:9},
   steel:[{x:34,y:100,r:7},{x:56,y:100,r:7},{x:78,y:100,r:6},{x:92,y:100,r:6}],
   brakes:[{x:88,y:100,r:16}],
@@ -494,31 +509,31 @@ MAG.LEVELS = [
   solutionNote:"Magnet wakes the first block from above (gentle on the orb); the magnetized relay hands the orb block to block, and the last block sits inside the cradle zone to hold it."
 },
 {
-  name:"Perfect Timing", sub:"The magnet has a rhythm.", tray:{classic:4,nudge:2}, par:1,
+  name:"Perfect Timing", sub:"The magnet has a rhythm.", tray:{classic:10,nudge:6,spark:4,brake:2}, par:1,
   launcher:{x:20,y:128}, cradle:{x:80,y:30,r:9},
   pulses:[{x:52,y:84,phases:[{dur:2.0,mode:1},{dur:1.5,mode:0},{dur:2.0,mode:-1},{dur:1.5,mode:0}]}],
   brakes:[{x:80,y:30,r:15}],
-  solution:[{x:38,y:114,flip:false}],
-  solutionNote:"One magnet lofts the orb into the pulse lane; the pulse rhythm grabs it and throws it to the brake. Verified by sim replay under the softened force curve."
+  solution:[{x:86,y:26,flip:false,type:"spark"}],
+  solutionNote:"A spark magnet nudges the orb from near the cradle into the pulse lane; the pulse rhythm grabs it and throws it to the brake. (iter2: new solution for the retuned feel.)"
 },
 {
-  name:"Catch It", sub:"Come in hot.", tray:{classic:4,nudge:2,titan:1}, par:1,
+  name:"Catch It", sub:"Come in hot.", tray:{classic:10,nudge:6,spark:4,titan:3,anchor:2,brake:2}, par:1,
   launcher:{x:14,y:128}, cradle:{x:88,y:128,r:9},
   brakes:[{x:88,y:128,r:18}],
   solution:[{x:2,y:128,flip:false}],
   solutionNote:"Close N pole shoves the orb flat across the board; the big brake eats the speed and pins it into the cradle."
 },
 {
-  name:"Bank Shot", sub:"Thread the needle.", tray:{classic:5,nudge:2,titan:1}, par:1,
+  name:"Bank Shot", sub:"Thread the needle.", tray:{classic:12,nudge:7,spark:5,titan:3,anchor:2,brake:2}, par:1,
   launcher:{x:16,y:120}, cradle:{x:84,y:50,r:9},
   walls:[{x:40,y:0,w:12,h:80}],
   coils:[{x:60,y:78,r:9,ax:0.61,ay:-0.8,power:60}],
   brakes:[{x:84,y:50,r:15}],
-  solution:[{x:10,y:42,flip:true}],
-  solutionNote:"A gentle drift magnet up-left walks the orb into the coil mouth; the coil fires it on-axis into the brake. Verified by sim replay under the softened force curve."
+  solution:[{x:14,y:56,flip:true}],
+  solutionNote:"A gentle drift magnet up-left walks the orb into the coil mouth; the coil fires it on-axis into the brake. (iter2: retuned position.)"
 },
 {
-  name:"Chain Maze", sub:"Wake the relay.", tray:{classic:5,nudge:2,titan:1}, par:1,
+  name:"Chain Maze", sub:"Wake the relay.", tray:{classic:12,nudge:7,spark:5,titan:3,anchor:2,brake:2}, par:1,
   launcher:{x:12,y:100}, cradle:{x:85,y:44,r:9},
   steel:[{x:28,y:100,r:7},{x:48,y:92,r:7},{x:66,y:80,r:7},{x:80,y:64,r:7},{x:88,y:46,r:6}],
   brakes:[{x:85,y:44,r:15}],
@@ -526,31 +541,31 @@ MAG.LEVELS = [
   solutionNote:"One magnet wakes the whole relay; the magnetized chain hands the orb along and traps it at the cradle. Verified by sim replay."
 },
 {
-  name:"Syncopation", sub:"Ride the rhythm.", tray:{classic:5,nudge:2,titan:1}, par:1,
+  name:"Syncopation", sub:"Ride the rhythm.", tray:{classic:12,nudge:7,spark:5,titan:3,anchor:2,brake:3}, par:1,
   launcher:{x:16,y:130}, cradle:{x:86,y:40,r:9},
   pulses:[{x:50,y:90,phases:[{dur:2.0,mode:1},{dur:1.2,mode:0},{dur:2.0,mode:-1},{dur:1.2,mode:0}]}],
   brakes:[{x:86,y:40,r:16}],
-  solution:[{x:4,y:30.5,flip:false}],
-  solutionNote:"A distant magnet biases the orb's drift into the pulse lane; the pulse cycle grabs and throws it to the brake. Verified by sim replay under the softened force curve."
+  solution:[{x:62,y:22,flip:true}],
+  solutionNote:"A magnet near the cradle biases the orb's drift into the pulse lane; the pulse cycle grabs and throws it to the brake. (iter2: new solution for the retuned feel.)"
 },
 {
-  name:"The Works", sub:"Relay into the coil.", tray:{classic:5,nudge:3,titan:1}, par:1,
+  name:"The Works", sub:"Relay into the coil.", tray:{classic:12,nudge:8,spark:5,titan:3,anchor:3,brake:3}, par:1,
   launcher:{x:14,y:120}, cradle:{x:90,y:30,r:9},
   steel:[{x:30,y:104,r:7},{x:48,y:92,r:7},{x:64,y:82,r:7}],
   coils:[{x:80,y:74,r:9,ax:0.6,ay:-0.8,power:60}],
   brakes:[{x:90,y:30,r:15}],
-  solution:[{x:4,y:120,flip:false}],
-  solutionNote:"A close shove off the launcher feeds the orb into the woken relay; the blocks hand it up-right into the coil mouth, and the coil fires it into the brake. Verified by sim replay under the softened force curve."
+  solution:[{x:2,y:124,flip:false}],
+  solutionNote:"A close shove off the launcher feeds the orb into the woken relay; the blocks hand it up-right into the coil mouth, and the coil fires it into the brake. (iter2: retuned position.)"
 },
 {
-  name:"Gauntlet", sub:"The full mad scientist.", tray:{classic:6,nudge:3,titan:1}, par:1,
+  name:"Gauntlet", sub:"The full mad scientist.", tray:{classic:14,nudge:8,spark:6,titan:4,anchor:3,brake:3}, par:1,
   launcher:{x:14,y:132}, cradle:{x:90,y:28,r:9},
   walls:[{x:36,y:70,w:12,h:80}],
   steel:[{x:22,y:108,r:7},{x:22,y:84,r:7},{x:44,y:58,r:7}],
   coils:[{x:66,y:52,r:9,ax:0.75,ay:-0.66,power:62}],
   brakes:[{x:90,y:28,r:15}],
-  solution:[{x:34,y:58,flip:true}],
-  solutionNote:"One magnet lifts the orb up and over the wall; the woken relay guides it into the coil, which fires it into the brake. Verified by sim replay under the softened force curve."
+  solution:[{x:38,y:54,flip:true}],
+  solutionNote:"One magnet lifts the orb up and over the wall; the woken relay guides it into the coil, which fires it into the brake. (iter2: retuned position.)"
 }
 ];
 </script>
@@ -647,8 +662,9 @@ function updateParticles(dt){
 
 /* ---------- 2.5D entity drawing ---------- */
 function drawMagnet(m,t,glow){
-  var s=m.flip?-1:1;
   var T=(MAG.TYPES||{}).hasOwnProperty(m.type)?MAG.TYPES[m.type]:MAG.TYPES.classic;
+  if(T.isBrake){ drawBrakeZone(m,t,glow); return; }
+  var s=m.flip?-1:1;
   var h=T.half;
   shadow(m.x+2,m.y+5,h+2,4.2);
   // extrusion (fake thickness)
@@ -664,6 +680,25 @@ function drawMagnet(m,t,glow){
   drawCap(m.x+h-2.6,m.y,!leftIsN,'r');
   if(glow){ ctx.strokeStyle='rgba(232,182,76,0.9)'; ctx.lineWidth=1.6;
     rr(m.x-h-2,m.y-5.5,h*2+4,11,5); ctx.stroke(); }
+}
+function drawBrakeZone(m,t,glow){
+  var T=MAG.TYPES.brake, r=T.r;
+  // soft fill
+  ctx.beginPath(); ctx.arc(m.x,m.y,r,0,TAU);
+  ctx.fillStyle='rgba(120,140,180,0.14)'; ctx.fill();
+  // dashed rotating ring
+  ctx.save();
+  ctx.strokeStyle='rgba(140,170,220,0.75)'; ctx.lineWidth=1.6;
+  ctx.setLineDash([5,4]); ctx.lineDashOffset=-t*12;
+  ctx.beginPath(); ctx.arc(m.x,m.y,r,0,TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  // center icon: three chevrons (slow)
+  ctx.fillStyle='rgba(160,190,235,0.85)';
+  ctx.font='bold 7px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('|||',m.x,m.y+0.5);
+  ctx.restore();
+  if(glow){ ctx.strokeStyle='rgba(232,182,76,0.9)'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(m.x,m.y,r+2.5,0,TAU); ctx.stroke(); }
 }
 function drawCap(x,y,isN,side){
   var g=ctx.createLinearGradient(x,y-3.5,x,y+3.5);
@@ -898,15 +933,19 @@ function updateTop(){
   $('bFields').classList.toggle('on',G.showFields);
   $('bSound').classList.toggle('on',soundOn);
 }
-var TRAY_ORDER=['classic','nudge','titan'];
-function trayLabel(tp){ return tp==='classic'?'CLASSIC':(tp==='nudge'?'NUDGE':'TITAN'); }
+var TRAY_ORDER=['classic','nudge','spark','anchor','titan','brake'];
+function trayLabel(tp){
+  return {classic:'CLASSIC',nudge:'NUDGE',spark:'SPARK',anchor:'ANCHOR',titan:'TITAN',brake:'BRAKE'}[tp]||tp.toUpperCase();
+}
 function updateTray(){
   var tr=$('tray'); tr.innerHTML='';
   TRAY_ORDER.forEach(function(tp){
     var n=(G.tray&&G.tray[tp])||0;
     for(var i=0;i<n;i++){
       var d=document.createElement('div'); d.className='tpiece full '+tp;
-      d.innerHTML='<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div>';
+      d.innerHTML = tp==='brake'
+        ? '<div class="zone"></div><div class="tag">'+trayLabel(tp)+'</div>'
+        : '<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div>';
       d.setAttribute('role','button'); d.setAttribute('aria-label','Add '+trayLabel(tp).toLowerCase()+' magnet');
       (function(t){ d.onclick=function(){ addMagnet(t); }; })(tp);
       tr.appendChild(d);
@@ -935,7 +974,7 @@ function addMagnet(type){
 function loadLevel(i){
   G.levelIdx=i; var L=MAG.LEVELS[i];
   G.placements=(L.preplaced||[]).map(function(m){return {x:m.x,y:m.y,flip:!!m.flip,type:m.type||'classic'};});
-  G.tray={classic:(L.tray.classic||0),nudge:(L.tray.nudge||0),titan:(L.tray.titan||0)};
+  G.tray={classic:(L.tray.classic||0),nudge:(L.tray.nudge||0),spark:(L.tray.spark||0),anchor:(L.tray.anchor||0),titan:(L.tray.titan||0),brake:(L.tray.brake||0)};
   G.world=MAG.makeWorld(L); G.world.placed=G.placements;
   G.mode='build'; G.paused=false; G.particles=[]; G.sel=null; prevCoilFlash=[];
   setOverlay(null); updateTop(); updateTray();
@@ -998,8 +1037,10 @@ cv.addEventListener('pointerdown',function(e){
   var p=toWorld(e), i, m=null;
   for(i=G.placements.length-1;i>=0;i--){
     var q=G.placements[i];
-    var qh=((MAG.TYPES||{}).hasOwnProperty(q.type)?MAG.TYPES[q.type]:MAG.TYPES.classic).half;
-    if(Math.abs(q.x-p.x)<qh+4&&Math.abs(q.y-p.y)<10){ m=q; break; }
+    var QT=((MAG.TYPES||{}).hasOwnProperty(q.type)?MAG.TYPES[q.type]:MAG.TYPES.classic);
+    if(QT.isBrake){
+      if(Math.hypot(q.x-p.x,q.y-p.y)<QT.r+4){ m=q; break; }
+    } else if(Math.abs(q.x-p.x)<QT.half+4&&Math.abs(q.y-p.y)<10){ m=q; break; }
   }
   if(m){
     drag={m:m,dx:m.x-p.x,dy:m.y-p.y,moved:false,t0:performance.now(),sx:p.x,sy:p.y};
@@ -1027,8 +1068,8 @@ cv.addEventListener('pointerup',function(e){
       if(ix>=0){ var bt=d.m.type||'classic'; G.placements.splice(ix,1); G.tray[bt]=(G.tray[bt]||0)+1; sfx.remove(); updateTray(); }
       lastTap={m:null,t:0};
     } else {
-      d.m.flip=!d.m.flip; sfx.flip();
-      spawn(d.m.x,d.m.y,5,'#9adcff',26,0.35,1.8);
+      var MT=((MAG.TYPES||{}).hasOwnProperty(d.m.type)?MAG.TYPES[d.m.type]:MAG.TYPES.classic);
+      if(!MT.isBrake){ d.m.flip=!d.m.flip; sfx.flip(); spawn(d.m.x,d.m.y,5,'#9adcff',26,0.35,1.8); }
       lastTap={m:d.m,t:now};
     }
   }
