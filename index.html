@@ -34,8 +34,11 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
 #traybar{display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:72px;
   background:var(--panel);border-top:1px solid #232b3d;}
 #trayLabel{font-size:11px;color:var(--dim);letter-spacing:1px;}
-#tray{display:flex;gap:8px;flex:1;flex-wrap:wrap;}
-.tpiece{width:56px;height:48px;border-radius:10px;border:2px dashed #3a4560;
+#tray{display:flex;gap:8px;flex:1;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+  padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+#tray::-webkit-scrollbar{height:6px;}
+#tray::-webkit-scrollbar-thumb{background:#2c364e;border-radius:3px;}
+.tpiece{flex:0 0 auto;width:56px;height:48px;border-radius:10px;border:2px dashed #3a4560;
   background:#1b2233;position:relative;cursor:pointer;}
 .tpiece.full{border-style:solid;border-color:#4a5878;}
 .tpiece .bar{position:absolute;left:8px;right:8px;top:16px;height:16px;border-radius:8px;
