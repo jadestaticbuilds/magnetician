@@ -38,7 +38,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
   padding-bottom:4px;-webkit-overflow-scrolling:touch;}
 #tray::-webkit-scrollbar{height:6px;}
 #tray::-webkit-scrollbar-thumb{background:#2c364e;border-radius:3px;}
-.tpiece{flex:0 0 auto;width:56px;height:48px;border-radius:10px;border:2px dashed #3a4560;
+.tpiece{flex:0 0 auto;width:56px;height:58px;border-radius:10px;border:2px dashed #3a4560;
   background:#1b2233;position:relative;cursor:pointer;}
 .tpiece.full{border-style:solid;border-color:#4a5878;}
 .tpiece .bar{position:absolute;left:8px;right:8px;top:16px;height:16px;border-radius:8px;
@@ -54,8 +54,14 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
 .tpiece.brake .bar{display:none;}
 .tpiece.brake .zone{position:absolute;left:12px;right:12px;top:6px;bottom:12px;border-radius:50%;
   border:2px dashed #8ca6d8;background:rgba(120,140,180,0.15);}
-.tpiece .tag{position:absolute;left:0;right:0;bottom:2px;text-align:center;
+.tpiece .tag{position:absolute;left:0;right:0;bottom:14px;text-align:center;
   font-size:9px;letter-spacing:1px;color:var(--dim);}
+.tpiece .pwr{position:absolute;left:0;right:0;bottom:5px;text-align:center;}
+.tpiece .pwr i{display:inline-block;width:5px;height:5px;border-radius:50%;margin:0 1.5px;
+  background:#2a3350;}
+.tpiece .pwr i.on{background:#e8b64c;box-shadow:0 0 4px #e8b64c;}
+.tpiece .blurb{position:absolute;left:0;right:0;bottom:-9px;text-align:center;
+  font-size:7px;letter-spacing:.4px;color:var(--dim);opacity:.75;white-space:nowrap;}
 #parInfo{font-size:12px;color:var(--dim);text-align:right;line-height:1.5;white-space:nowrap;}
 #parInfo b{color:var(--gold);}
 #controls{display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
@@ -106,7 +112,7 @@ kbd{border:1px solid #3a4560;border-radius:6px;padding:1px 6px;font-size:11px;ba
   #traybar{min-height:88px;padding:10px 16px;gap:14px;}
   #trayLabel{font-size:13px;}
   #tray{gap:12px;}
-  .tpiece{width:72px;height:60px;border-radius:12px;}
+  .tpiece{width:72px;height:70px;border-radius:12px;}
   .tpiece .bar{top:20px;height:20px;}
   .tpiece .tag{font-size:10px;bottom:4px;}
   #parInfo{font-size:14px;}
@@ -942,6 +948,9 @@ function updateTop(){
   $('bSound').classList.toggle('on',soundOn);
 }
 var TRAY_ORDER=['classic','nudge','spark','anchor','titan','brake'];
+// strength bars (0-3) for visual clarity in tray
+var TYPE_POWER={classic:2,nudge:1,spark:1,anchor:3,titan:3,brake:0};
+var TYPE_BLURB={classic:'Standard pull',nudge:'Gentle nudge',spark:'Micro adjust',anchor:'Pinpoint power',titan:'Heavy pull',brake:'Slow zone'};
 function trayLabel(tp){
   return {classic:'CLASSIC',nudge:'NUDGE',spark:'SPARK',anchor:'ANCHOR',titan:'TITAN',brake:'BRAKE'}[tp]||tp.toUpperCase();
 }
@@ -951,10 +960,12 @@ function updateTray(){
     var n=(G.tray&&G.tray[tp])||0;
     for(var i=0;i<n;i++){
       var d=document.createElement('div'); d.className='tpiece full '+tp;
+      var pw=TYPE_POWER[tp]||0, dots='';
+      for(var k=0;k<3;k++) dots+='<i class="'+(k<pw?'on':'')+'"></i>';
       d.innerHTML = tp==='brake'
-        ? '<div class="zone"></div><div class="tag">'+trayLabel(tp)+'</div>'
-        : '<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div>';
-      d.setAttribute('role','button'); d.setAttribute('aria-label','Add '+trayLabel(tp).toLowerCase()+' magnet');
+        ? '<div class="zone"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div><div class="blurb">'+TYPE_BLURB[tp]+'</div>'
+        : '<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div><div class="blurb">'+TYPE_BLURB[tp]+'</div>';
+      d.setAttribute('role','button'); d.setAttribute('aria-label',trayLabel(tp)+': '+TYPE_BLURB[tp]);
       (function(t){ d.onclick=function(){ addMagnet(t); }; })(tp);
       tr.appendChild(d);
     }
