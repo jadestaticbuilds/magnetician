@@ -64,7 +64,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
   font-size:7px;letter-spacing:.4px;color:var(--dim);opacity:.75;white-space:nowrap;}
 #parInfo{font-size:12px;color:var(--dim);text-align:right;line-height:1.5;white-space:nowrap;}
 #parInfo b{color:var(--gold);}
-#controls{display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+#controls{display:flex;gap:10px;padding:10px 12px 34px;
+  padding-bottom:max(34px, calc(10px + env(safe-area-inset-bottom)));
   background:var(--panel);border-top:1px solid #232b3d;}
 .cbtn{flex:1;min-height:56px;border-radius:14px;border:1px solid #2c364e;font-size:16px;
   font-weight:800;letter-spacing:1px;cursor:pointer;color:var(--ink);background:#1b2233;}
@@ -116,7 +117,8 @@ kbd{border:1px solid #3a4560;border-radius:6px;padding:1px 6px;font-size:11px;ba
   .tpiece .bar{top:20px;height:20px;}
   .tpiece .tag{font-size:10px;bottom:4px;}
   #parInfo{font-size:14px;}
-  #controls{gap:14px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));}
+  #controls{gap:14px;padding:12px 16px 36px;
+    padding-bottom:max(36px, calc(12px + env(safe-area-inset-bottom)));}
   .cbtn{min-height:64px;font-size:19px;border-radius:16px;}
   .card{max-width:540px;padding:34px 30px;}
   .card h1{font-size:40px;}
