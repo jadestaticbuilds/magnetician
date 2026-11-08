@@ -606,10 +606,10 @@ MAG.LEVELS = [
 },
 {
   name:"Catch It", sub:"Come in hot.", tray:{classic:10,nudge:6,spark:4,titan:3,anchor:2,brake:2}, par:1,
-  launcher:{x:14,y:128}, cradle:{x:88,y:128,r:9},
+  launcher:{x:34,y:128}, cradle:{x:88,y:128,r:9},
   brakes:[{x:88,y:128,r:18}],
-  solution:[{x:2,y:128,flip:false}],
-  solutionNote:"Close N pole shoves the orb flat across the board; the big brake eats the speed and pins it into the cradle."
+  solution:[{x:60,y:92,flip:true}],
+  solutionNote:"A magnet high over the board hauls the orb up and across; it dives in hot and the big brake eats the speed and pins it into the cradle. (Smoothed Nov 7: launcher moved in and a pull solution replaced the pixel-perfect shove.)"
 },
 {
   name:"Bank Shot", sub:"Thread the needle.", tray:{classic:12,nudge:7,spark:5,titan:3,anchor:2,brake:2}, par:1,
@@ -632,20 +632,20 @@ MAG.LEVELS = [
 },
 {
   name:"Syncopation", sub:"Ride the rhythm.", tray:{classic:12,nudge:7,spark:5,titan:3,anchor:2,brake:3}, par:1,
-  launcher:{x:16,y:130}, cradle:{x:86,y:40,r:9},
+  launcher:{x:16,y:130}, cradle:{x:86,y:40,r:13},
   pulses:[{x:50,y:90,phases:[{dur:2.0,mode:1},{dur:1.2,mode:0},{dur:2.0,mode:-1},{dur:1.2,mode:0}]}],
   brakes:[{x:86,y:40,r:16}],
-  solution:[{x:62,y:22,flip:true}],
-  solutionNote:"A magnet near the cradle biases the orb's drift into the pulse lane; the pulse cycle grabs and throws it to the brake. (iter2: new solution for the retuned feel.)"
+  solution:[{x:94,y:45,flip:false,type:"spark"}],
+  solutionNote:"A spark magnet by the cradle biases the orb's drift into the pulse lane; the pulse cycle grabs and throws it to the brake. (Smoothed Nov 7: wider cradle, and the magnet sits right at the cradle mouth.)"
 },
 {
   name:"The Works", sub:"Relay into the coil.", tray:{classic:12,nudge:8,spark:5,titan:3,anchor:3,brake:3}, par:1,
-  launcher:{x:14,y:120}, cradle:{x:90,y:30,r:9},
+  launcher:{x:14,y:120}, cradle:{x:90,y:30,r:13},
   steel:[{x:30,y:104,r:7},{x:48,y:92,r:7},{x:64,y:82,r:7}],
   coils:[{x:80,y:74,r:9,ax:0.6,ay:-0.8,power:60}],
   brakes:[{x:90,y:30,r:15}],
-  solution:[{x:2,y:124,flip:false}],
-  solutionNote:"A close shove off the launcher feeds the orb into the woken relay; the blocks hand it up-right into the coil mouth, and the coil fires it into the brake. (iter2: retuned position.)"
+  solution:[{x:48,y:60,flip:true}],
+  solutionNote:"A magnet above the chain wakes the relay and lifts the orb into it; the blocks hand it up-right into the coil mouth, and the coil fires it into the brake. (Smoothed Nov 7: wider cradle and a lift solution replaced the pixel-perfect launcher shove.)"
 },
 {
   name:"Gauntlet", sub:"The full mad scientist.", tray:{classic:14,nudge:8,spark:6,titan:4,anchor:3,brake:3}, par:1,
