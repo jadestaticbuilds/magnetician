@@ -55,13 +55,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
 .tpiece.brake .zone{position:absolute;left:12px;right:12px;top:6px;bottom:12px;border-radius:50%;
   border:2px dashed #8ca6d8;background:rgba(120,140,180,0.15);}
 .tpiece .tag{position:absolute;left:0;right:0;bottom:14px;text-align:center;
-  font-size:9px;letter-spacing:1px;color:var(--dim);}
+  font-size:10px;letter-spacing:1px;color:var(--dim);}
 .tpiece .pwr{position:absolute;left:0;right:0;bottom:5px;text-align:center;}
 .tpiece .pwr i{display:inline-block;width:5px;height:5px;border-radius:50%;margin:0 1.5px;
   background:#2a3350;}
 .tpiece .pwr i.on{background:#e8b64c;box-shadow:0 0 4px #e8b64c;}
-.tpiece .blurb{position:absolute;left:0;right:0;bottom:-9px;text-align:center;
-  font-size:7px;letter-spacing:.4px;color:var(--dim);opacity:.75;white-space:nowrap;}
+
 #parInfo{font-size:12px;color:var(--dim);text-align:right;line-height:1.5;white-space:nowrap;}
 #parInfo b{color:var(--gold);}
 #controls{display:flex;gap:10px;padding:10px 12px 34px;
@@ -150,7 +149,7 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
   <div id="top">
     <button class="tbtn" id="bMenu" aria-label="Levels">&#9776;</button>
     <div id="lvlName">MAGNETICIAN<small>pick a level</small></div>
-    <button class="tbtn on" id="bFields" aria-label="Toggle field lines" title="Field lines">&#8756;</button>
+    <button class="tbtn on" id="bFields" aria-label="Toggle field lines" title="Field lines">&#8756;<span style="font-size:11px;margin-left:5px;letter-spacing:.5px">FIELDS</span></button>
     <button class="tbtn on" id="bSound" aria-label="Toggle sound" title="Sound">&#9836;</button>
     <button class="tbtn" id="bPause" aria-label="Pause" title="Pause">| |</button>
   </div>
@@ -172,8 +171,11 @@ html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;us
       <b>Tap</b> a placed magnet to flip its poles. <b>Double-tap</b> to send it back.</p>
       <p>Press <b>RELEASE</b> to let the orb fly. <b>RESET</b> stops the run and keeps
       your layout. Match or beat <b>par</b> for a star.</p>
-      <p>Three magnet types: <b>Nudge</b> is small and gentle for fine work,
-      <b>Classic</b> is the all-rounder, <b>Titan</b> is long and strong for big moves.</p>
+      <p>Six magnet types: <b>Nudge</b> is small and gentle for fine work,
+      <b>Classic</b> is the all-rounder, <b>Spark</b> is the tiniest touch for micro
+      adjustments, <b>Titan</b> is long and strong for big moves, <b>Anchor</b> is
+      precision power that holds its pull, and <b>Brake</b> is a damping zone that
+      slows the orb down.</p>
       <p>Coils fire the orb. Gray blocks wake up near magnets and join in.
       Pulsing magnets keep their own rhythm. Blue shimmer slows everything down.</p>
       <p>New hazards: violet <b>shields</b> block magnetic fields, red <b>dead zones</b> kill
@@ -1180,8 +1182,8 @@ function updateTray(){
       var pw=TYPE_POWER[tp]||0, dots='';
       for(var k=0;k<3;k++) dots+='<i class="'+(k<pw?'on':'')+'"></i>';
       d.innerHTML = tp==='brake'
-        ? '<div class="zone"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div><div class="blurb">'+TYPE_BLURB[tp]+'</div>'
-        : '<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div><div class="blurb">'+TYPE_BLURB[tp]+'</div>';
+        ? '<div class="zone"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div>'
+        : '<div class="bar"></div><div class="tag">'+trayLabel(tp)+'</div><div class="pwr">'+dots+'</div>';
       d.setAttribute('role','button'); d.setAttribute('aria-label',trayLabel(tp)+': '+TYPE_BLURB[tp]);
       (function(t){ d.onclick=function(){ addMagnet(t); }; })(tp);
       tr.appendChild(d);
